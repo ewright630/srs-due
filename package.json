@@ -1,0 +1,17 @@
+{
+  "name": "srs-due",
+  "version": "0.1.0",
+  "description": "Query which spaced-repetition cards are due for review",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "srs-due": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

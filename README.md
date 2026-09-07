@@ -27,8 +27,10 @@ Fields:
   dates and datetimes both work.
 - `interval_days` (number, required) - days from `last_review` until the
   card is next due.
-- `ease` (number, optional) - carried through but not used yet; see
-  Roadmap below.
+- `ease` (number, optional) - SM-2 ease factor; defaults to 2.5 for a card
+  that has never been graded.
+- `repetitions` (number, optional) - consecutive successful SM-2 reviews;
+  defaults to 0.
 
 A card is due once `last_review + interval_days` has passed.
 
@@ -69,7 +71,22 @@ replaying an old export):
 cat cards/*.jsonl | node dist/cli.js --asof 2026-09-10
 ```
 
+### Recording a grade
+
+After you review a card, record how well you recalled it (SM-2 scale,
+0-5) and get back the rescheduled card state:
+
+```
+cat cards/spanish.jsonl | node dist/cli.js grade spanish-ser-vs-estar 4
+{"id":"spanish-ser-vs-estar","last_review":"2026-09-08T14:03:11.000Z","interval_days":6,"ease":2.5,"repetitions":2}
+```
+
+This only prints the updated line - it doesn't rewrite the input file.
+Pipe it wherever you're keeping card state, or splice it back in by hand.
+`--asof` works here too, for backdating a review or replaying a log.
+
 ## Roadmap
 
-Proper SM-2 rescheduling after a grade is recorded, a `--format json`
-output mode, and a test suite that doesn't require a real clock.
+A `--format json` output mode, a test suite that doesn't require a real
+clock, directory input with glob expansion, and a `--days-ahead` range
+query for upcoming load.

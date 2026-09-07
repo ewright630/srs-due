@@ -3,6 +3,7 @@ export interface Card {
   lastReview: Date;
   intervalDays: number;
   ease?: number;
+  repetitions?: number;
 }
 
 // Input is one JSON object per line rather than a JSON array so that files
@@ -42,5 +43,15 @@ export function parseCardLine(line: string, source: string, lineNumber: number):
 
   const ease = typeof obj.ease === "number" ? obj.ease : undefined;
 
-  return { id: obj.id, lastReview, intervalDays: obj.interval_days, ease };
+  if (
+    obj.repetitions !== undefined &&
+    (typeof obj.repetitions !== "number" ||
+      !Number.isInteger(obj.repetitions) ||
+      obj.repetitions < 0)
+  ) {
+    throw new Error(`${source}:${lineNumber}: "repetitions" must be a non-negative integer`);
+  }
+  const repetitions = typeof obj.repetitions === "number" ? obj.repetitions : undefined;
+
+  return { id: obj.id, lastReview, intervalDays: obj.interval_days, ease, repetitions };
 }

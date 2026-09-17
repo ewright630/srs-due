@@ -71,6 +71,13 @@ replaying an old export):
 cat cards/*.jsonl | node dist/cli.js --asof 2026-09-10
 ```
 
+Or get the same data as a single JSON object, for scripting:
+
+```
+cat cards/*.jsonl | node dist/cli.js --format json --asof 2026-09-10
+{"cards":[{"id":"kanji-water","due_date":"2026-09-05","days_overdue":1,"status":"overdue"}, ...],"due_count":2,"total_count":3}
+```
+
 ### Recording a grade
 
 After you review a card, record how well you recalled it (SM-2 scale,
@@ -87,6 +94,5 @@ Pipe it wherever you're keeping card state, or splice it back in by hand.
 
 ## Roadmap
 
-A `--format json` output mode, a test suite that doesn't require a real
-clock, directory input with glob expansion, and a `--days-ahead` range
-query for upcoming load.
+A test suite that doesn't require a real clock, directory input with
+glob expansion, and a `--days-ahead` range query for upcoming load.

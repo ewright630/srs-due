@@ -11,7 +11,7 @@ interface Source {
 
 function usage(): string {
   return [
-    "usage: srs-due [--asof DATE] [FILE...]",
+    "usage: srs-due [--asof DATE] [--format table|json] [FILE...]",
     "       srs-due grade CARD_ID SCORE [--asof DATE] [FILE...]",
     "",
     "Reads spaced-repetition card state (one JSON object per line) from FILE",
@@ -20,6 +20,9 @@ function usage(): string {
     "",
     "Each line looks like:",
     '  {"id":"card-1","last_review":"2026-08-30","interval_days":6}',
+    "",
+    "--format json prints a single JSON object instead of the tab-separated",
+    "table, for piping into another program.",
     "",
     "Run `srs-due grade --help` for the SM-2 rescheduling subcommand.",
   ].join("\n");
@@ -78,8 +81,19 @@ function formatDays(n: number): string {
   return `due in ${until} day${until === 1 ? "" : "s"}`;
 }
 
-function parseArgs(argv: string[]): { asOf: Date; files: string[] } | { help: true } {
+type OutputFormat = "table" | "json";
+
+function statusOf(daysOverdue: number): "overdue" | "due_today" | "upcoming" {
+  if (daysOverdue > 0) return "overdue";
+  if (daysOverdue === 0) return "due_today";
+  return "upcoming";
+}
+
+function parseArgs(
+  argv: string[]
+): { asOf: Date; files: string[]; format: OutputFormat } | { help: true } {
   let asOf = new Date();
+  let format: OutputFormat = "table";
   const files: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
@@ -94,6 +108,12 @@ function parseArgs(argv: string[]): { asOf: Date; files: string[] } | { help: tr
         throw new Error(`--asof: "${value}" is not a valid date`);
       }
       asOf = parsed;
+    } else if (arg === "--format") {
+      const value = argv[++i];
+      if (value !== "table" && value !== "json") {
+        throw new Error(`--format must be "table" or "json", got "${value}"`);
+      }
+      format = value;
     } else if (arg === "--help" || arg === "-h") {
       return { help: true };
     } else if (arg?.startsWith("--")) {
@@ -103,7 +123,7 @@ function parseArgs(argv: string[]): { asOf: Date; files: string[] } | { help: tr
     }
   }
 
-  return { asOf, files };
+  return { asOf, files, format };
 }
 
 function parseGradeArgs(
@@ -220,7 +240,7 @@ function main(argv: string[]): number {
     console.log(usage());
     return 0;
   }
-  const { asOf, files } = parsed;
+  const { asOf, files, format } = parsed;
 
   const sources: Source[] =
     files.length > 0
@@ -236,13 +256,33 @@ function main(argv: string[]): number {
   }
 
   if (cards.length === 0) {
-    console.log("no cards given");
+    if (format === "json") {
+      console.log(JSON.stringify({ cards: [], due_count: 0, total_count: 0 }));
+    } else {
+      console.log("no cards given");
+    }
     return 0;
   }
 
   const evaluated = sortByUrgency(evaluate(cards, asOf));
   const due = evaluated.filter((d) => d.daysOverdue >= 0);
   const upcoming = evaluated.filter((d) => d.daysOverdue < 0);
+
+  if (format === "json") {
+    console.log(
+      JSON.stringify({
+        cards: evaluated.map((d) => ({
+          id: d.card.id,
+          due_date: d.dueDate.toISOString().slice(0, 10),
+          days_overdue: d.daysOverdue,
+          status: statusOf(d.daysOverdue),
+        })),
+        due_count: due.length,
+        total_count: cards.length,
+      })
+    );
+    return 0;
+  }
 
   for (const d of due) {
     console.log(`${d.card.id}\t${d.dueDate.toISOString().slice(0, 10)}\t${formatDays(d.daysOverdue)}`);

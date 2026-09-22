@@ -92,7 +92,17 @@ This only prints the updated line - it doesn't rewrite the input file.
 Pipe it wherever you're keeping card state, or splice it back in by hand.
 `--asof` works here too, for backdating a review or replaying a log.
 
+## Development
+
+```
+npm test
+```
+
+Runs the suite with `node --test`, using explicit `Date` objects
+throughout instead of the system clock, so results don't drift with
+when you happen to run them.
+
 ## Roadmap
 
-A test suite that doesn't require a real clock, directory input with
-glob expansion, and a `--days-ahead` range query for upcoming load.
+Directory input with glob expansion, and a `--days-ahead` range query
+for upcoming load.
